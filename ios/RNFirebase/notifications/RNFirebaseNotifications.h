@@ -9,6 +9,7 @@
 @interface RNFirebaseNotifications : RCTEventEmitter<RCTBridgeModule>
 
 + (void)configure;
++ (void)configure:(void (^)(RNFirebaseNotifications* instance)) delegate;
 + (_Nonnull instancetype)instance;
 
 #if !TARGET_OS_TV

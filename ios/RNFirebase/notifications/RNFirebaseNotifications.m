@@ -16,12 +16,18 @@
 #endif
 @end
 
+@interface Callable
+- (void)call:(RNFirebaseNotifications*) instance;
+@end
+
 @implementation RNFirebaseNotifications {
     NSMutableDictionary<NSString *, void (^)(UIBackgroundFetchResult)> *fetchCompletionHandlers;
     NSMutableDictionary<NSString *, void(^)(void)> *completionHandlers;
 }
 
 static RNFirebaseNotifications *theRNFirebaseNotifications = nil;
+void (^handler)(RNFirebaseNotifications* instance) = nil;
+
 // PRE-BRIDGE-EVENTS: Consider enabling this to allow events built up before the bridge is built to be sent to the JS side
 // static NSMutableArray *pendingEvents = nil;
 static NSDictionary *initialNotification = nil;
@@ -38,6 +44,13 @@ static NSString *const DEFAULT_ACTION = @"com.apple.UNNotificationDefaultActionI
     theRNFirebaseNotifications = [[RNFirebaseNotifications alloc] init];
 }
 
++ (void)configure:(void (^)(RNFirebaseNotifications* instance)) delegate {
+    // PRE-BRIDGE-EVENTS: Consider enabling this to allow events built up before the bridge is built to be sent to the JS side
+    // pendingEvents = [[NSMutableArray alloc] init];
+    theRNFirebaseNotifications = [[RNFirebaseNotifications alloc] init];
+    handler = delegate;
+}
+
 RCT_EXPORT_MODULE();
 
 - (id)init {
@@ -52,7 +65,11 @@ RCT_EXPORT_MODULE();
 - (void)initialise {
     // If we're on iOS 10 then we need to set this as a delegate for the UNUserNotificationCenter
     if (@available(iOS 10.0, *)) {
-        [UNUserNotificationCenter currentNotificationCenter].delegate = self;
+        if (handler == nil) {
+            [UNUserNotificationCenter currentNotificationCenter].delegate = self;
+        } else {
+            handler(self);
+        }
     }
 
     // Set static instance for use from AppDelegate
